@@ -62,7 +62,7 @@
 
         <br />
         <div>
-          <el-button type="primary" class="transfer" @click="executeCall"
+          <el-button type="primary" class="transfer" @click="sendRPG"
             >send</el-button
           >
         </div>
@@ -120,8 +120,8 @@ export default Vue.extend({
       activeTab: 'first',
       myAddress: '',
       myBalance: '0.00',
-      toAddress: '',
-      toAmount: '0.00',
+      toAddress: '0x8291507Afda0BBA820efB6DFA339f09C9465215C',
+      toAmount: '0.01',
       txHash: '',
       form: {},
       // STEP 1: create UPRangers instance
@@ -159,13 +159,16 @@ export default Vue.extend({
         await this.upRangers.initUniPass(this.username, account.email!)
 
         this.myAddress = this.upRangers.getAddress()
-        this.myBalance = await this.upRangers
-          .getWeb3()
-          .eth.getBalance(this.myAddress)
+        await this.refreshBalance()
       } catch (err) {
         this.$message.error(err as string)
         console.log('connect err', err)
       }
+    },
+    async refreshBalance() {
+      this.myBalance = await this.upRangers
+        .getWeb3()
+        .eth.getBalance(this.myAddress)
     },
     logout() {
       console.log('connect clicked')
@@ -212,6 +215,10 @@ export default Vue.extend({
       }
     },
     async sendRPG() {
+      if (Number(this.myBalance) < Number(this.toAmount)) {
+        this.$message.error('balance is not enough')
+        return
+      }
       try {
         this.upRangers.getUPCore().initPop()
 
@@ -222,6 +229,8 @@ export default Vue.extend({
         )
         console.log('send RPG success', this.txHash)
         this.$message.success(`send RPG success, tx hash = ${this.txHash}`)
+
+        await this.refreshBalance()
       } catch (err) {
         this.$message.error(err as string)
         console.log('err', err)
