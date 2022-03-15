@@ -49,6 +49,13 @@
               :autosize="{ minRows: 1 }"
             />
           </el-form-item>
+          <span>
+            <b style="color: black">
+              <a href="https://robin-faucet.rangersprotocol.com/home">
+                Rangers Faucet:
+              </a>
+            </b>
+          </span>
           <el-form-item label="Your Balance:" prop="address">
             <el-input v-model="myBalanceFormat" disabled readonly />
           </el-form-item>
