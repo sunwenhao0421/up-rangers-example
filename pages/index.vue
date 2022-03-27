@@ -1,7 +1,7 @@
 <template>
   <div id="page-demo" class="unipass-page">
     <i class="background-logo iconfont icon-logo"></i>
-    <div class="head">UniPass Demo</div>
+    <div class="head">mix-UniPass Demo</div>
     <div v-if="username">
       <div>
         <br />
@@ -96,14 +96,28 @@
             >
           </div>
           <br />
-          <div v-if="sig">
+          <div v-if="signature">
             <h3 class="input">Signature:</h3>
             <el-input
-              v-model="sig"
+              v-model="signature"
               type="textarea"
               :autosize="{ minRows: 8, maxRows: 10 }"
               resize="none"
             ></el-input>
+          </div>
+        </div>
+      </el-tab-pane>
+            <el-tab-pane label="nft" name="third">
+            <div>
+          <br />
+          <h3 class="input">nft数量:{{ nftNum }}</h3>
+          <div class="message">
+            <el-button type="primary" class="message-button" @click="claim"
+              >claim</el-button
+            >
+              <el-button type="success" class="message-button" @click="claim1"
+              >claim1</el-button
+            >
           </div>
         </div>
       </el-tab-pane>
@@ -115,6 +129,8 @@
 import Vue from 'vue'
 import { UPAuthMessage, UPAuthResponse } from 'up-core-test'
 import { ChainID, UPRangers } from 'up-rangers'
+import {mixUnipass} from "mix-unipass";
+import {contractConfig} from "@/config/contract";
 
 const DAI_ADDRESS = '0x25c58Aa062Efb4f069bD013De3e3C5797fb40651'
 
@@ -124,6 +140,8 @@ export default Vue.extend({
       username: '',
       message: 'TO BE SIGNED MESSAGE abc',
       sig: '',
+      nftNum:0,
+      signature:'',
       activeTab: 'first',
       myAddress: '',
       myBalance: '0.00',
@@ -131,6 +149,9 @@ export default Vue.extend({
       toAmount: '0.01',
       txHash: '',
       form: {},
+      mixUnipass: new mixUnipass(
+        {contracts:contractConfig}
+      ),
       // STEP 1: create UPRangers instance
       upRangers: new UPRangers({
         chainID: ChainID.testnet,
@@ -152,90 +173,59 @@ export default Vue.extend({
       this.$clipboard(this.myAddress)
       this.$message.success('copy succeeded')
     },
+
     async connect() {
       console.log('connect clicked')
       try {
         // STEP 2: connect unipass
-        const account = await this.upRangers
-          .getUPCore()
-          .connect({ email: true, evmKeys: true })
+        const account = await this.mixUnipass.connect();
         this.username = account.username
         console.log('account', account)
 
-        // STEP 3: init unipass with username and email
-        await this.upRangers.initUniPass(this.username, account.email!)
-
-        this.myAddress = this.upRangers.getAddress()
+        this.myAddress = this.mixUnipass.getAddress()
         await this.refreshBalance()
+        await this.refreshNftNum();
       } catch (err) {
         this.$message.error(err as string)
         console.log('connect err', err)
       }
     },
     async refreshBalance() {
-      this.myBalance = await this.upRangers
-        .getWeb3()
-        .eth.getBalance(this.myAddress)
+        this.myBalance = await this.mixUnipass.getBalance(this.myAddress)
+    },
+
+    async refreshNftNum(){
+       this.nftNum = await this.mixUnipass.nativeCall("nft", "balanceOf", [this.myAddress]);
     },
     logout() {
       console.log('connect clicked')
-      this.upRangers.getUPCore().disconnect()
+      this.mixUnipass.disconnect()
       this.username = ''
     },
-    async authorize() {
-      console.log('authorize clicked')
-      this.sig = ''
-      console.log({
-        username: this.username,
-        message: this.message,
-      })
-      try {
-        // SIGN Message with UniPass
-        const resp = await this.upRangers
-          .getUPCore()
-          .authorize(
-            new UPAuthMessage('PLAIN_MSG', this.username, this.message),
-          )
-        console.log('resp', resp)
-        this.sig = JSON.stringify(resp)
-      } catch (err) {
-        this.$message.error(err as string)
-        console.log('auth err', err)
-      }
+    async authorize(){
+      let resp = await this.mixUnipass.sign(this.message);
+       this.sig = resp
+       this.signature = JSON.stringify(resp);
     },
 
     async verifySig() {
-      try {
-        // VERIFY user signed message and sig
-        const ret = await this.upRangers.verifyUserSig(
-          '0x' + Buffer.from(this.message, 'utf-8').toString('hex'),
-          JSON.parse(this.sig) as UPAuthResponse,
-        )
-        if (ret === true) {
+
+     let res =  await this.mixUnipass.verifySig(this.message, this.sig);
+     if (res === true) {
           this.$message.success('verify signature success')
         } else {
           this.$message.error('verify signature failed')
         }
-      } catch (err) {
-        this.$message.error(err as string)
-        console.log('auth err', err)
-      }
     },
+
     async sendRPG() {
       if (Number(this.myBalance) < Number(this.toAmount)) {
         this.$message.error('balance is not enough')
         return
       }
       try {
-        this.upRangers.getUPCore().initPop()
-
-        // SEND RPG
-        this.txHash = await this.upRangers.transferEth(
-          this.toAddress,
-          this.upRangers.getWeb3().utils.toWei(this.toAmount),
-        )
-        console.log('send RPG success', this.txHash)
-        this.$message.success(`send RPG success, tx hash = ${this.txHash}`)
+       this.txHash = await this.mixUnipass.sendRpg(this.toAddress, this.toAmount);
+      this.$message.success(`send RPG success, tx hash = ${this.txHash}`)
 
         await this.refreshBalance()
       } catch (err) {
@@ -243,60 +233,27 @@ export default Vue.extend({
         console.log('err', err)
       }
     },
-    async sendToken() {
-      try {
-        this.upRangers.getUPCore().initPop()
-
-        // SEND DAI(ERC20) token
-        this.txHash = await this.upRangers.transferToken(
-          DAI_ADDRESS,
-          this.toAddress,
-          this.upRangers.getWeb3().utils.toWei(this.toAmount),
-        )
-
-        console.log('send Token success', this.txHash)
-        this.$message.success(`send token success, tx hash = ${this.txHash}`)
-      } catch (err) {
-        this.$message.error(err as string)
-        console.log('err', err)
-      }
+    //NativeCall
+    async claim(){
+      const res = await this.mixUnipass.executeNativeCall("nft", "cliam", [], 0);
+      this.refreshNftNum();
     },
-    async executeCall() {
-      try {
-        this.upRangers.getUPCore().initPop()
-
-        // CALL CONTRACT to execute its method
-        this.txHash = await this.upRangers.executeCall(
-          DAI_ADDRESS,
-          '0x00',
-          this.upRangers.getWeb3().eth.abi.encodeFunctionCall(
-            {
-              name: 'transfer',
-              type: 'function',
-              inputs: [
-                {
-                  name: 'dst',
-                  type: 'address',
-                },
-                {
-                  name: 'wad',
-                  type: 'uint256',
-                },
-              ],
-            },
-            [
-              this.toAddress,
-              this.upRangers.getWeb3().utils.toWei(this.toAmount),
-            ],
-          ),
-        )
-        console.log('execute call success', this.txHash)
-        this.$message.success(`execute call success, tx hash = ${this.txHash}`)
-      } catch (err) {
-        this.$message.error(err as string)
-        console.log('err', err)
-      }
-    },
+    //
+    async claim1(){
+     const res = await this.mixUnipass.executeCall(
+  "0x439CD9629B5479d1C049d82e09414390B1Dbd53c", //合约地址
+  {																							//合约abi
+    "inputs": [],
+    "name": "cliam",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  [],																					 //方法参数
+  "0"																					 //原生代币数量
+);
+      this.refreshNftNum();
+    }
   },
 })
 </script>
