@@ -1,7 +1,7 @@
 /*
  * @Author: mouse
  * @Date: 2022-03-26 20:42:46
- * @LastEditTime: 2022-03-27 16:24:37
+ * @LastEditTime: 2022-03-27 16:42:09
  * @LastEditors: mouse
  * @Description:
  * @FilePath: /up-rangers-example/config/contract.ts
@@ -717,6 +717,6 @@ export const contractConfig:contracts = {
         "type": "function"
       }
     ],
-    address:"0x439CD9629B5479d1C049d82e09414390B1Dbd53c",
+    address:"0xe73B04A625e8eDE58fBf8BA3BA6Aa3f733DbA5d4",
   }
 };

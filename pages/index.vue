@@ -241,7 +241,7 @@ export default Vue.extend({
     //
     async claim1(){
      const res = await this.mixUnipass.executeCall(
-  "0x439CD9629B5479d1C049d82e09414390B1Dbd53c", //合约地址
+  "0xe73B04A625e8eDE58fBf8BA3BA6Aa3f733DbA5d4", //合约地址
   {																							//合约abi
     "inputs": [],
     "name": "cliam",
