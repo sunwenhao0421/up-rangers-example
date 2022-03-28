@@ -7470,10 +7470,10 @@ mississippi@^3.0.0:
     stream-each "^1.1.0"
     through2 "^2.0.0"
 
-mix-unipass@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/mix-unipass/-/mix-unipass-1.1.0.tgz#8457780623016a76020dd16d93ebcbc3fb64a83a"
-  integrity sha512-DQhNM7BE60V0ZM+7+DicXBXgyYhI94EYLeJW7g5IhGIqjZ4gF5sXM262PtZj24SVDrE3qHquDZxUkcmSTKtOQw==
+mix-unipass@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/mix-unipass/-/mix-unipass-1.1.1.tgz#99094a47c9d1e0d019a744fc67602701ea069193"
+  integrity sha512-of+U9K85kQ/cMT4zRhc1Y5J9/dZtBQlGRKwx42rb4hZKO45ThQCurEjBEnY7bd44ugi7IzUJOA4cbjKXVELFsQ==
   dependencies:
     up-core-test "^0.1.7"
     up-rangers "^0.1.1"

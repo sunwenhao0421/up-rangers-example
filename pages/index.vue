@@ -252,7 +252,7 @@ export default Vue.extend({
   [],																					 //方法参数
   "0"																					 //原生代币数量
 );
-      this.refreshNftNum();
+    this.refreshNftNum();
     }
   },
 })
